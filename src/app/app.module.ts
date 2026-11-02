@@ -54,6 +54,7 @@ import { BelovedCustomerComponent } from './pages/beloved-customer/beloved-custo
 import { DrivingComponent } from './pages/driving/driving.component';
 import { ServicesOfferComponent } from './pages/services-offer/services-offer.component';
 import { ChatbotComponent } from './components/chatbot/chatbot.component';
+import { DragDropModule } from '@angular/cdk/drag-drop';
 
 @NgModule({
   declarations: [
@@ -115,7 +116,8 @@ import { ChatbotComponent } from './components/chatbot/chatbot.component';
     RouterModule,
     ReactiveFormsModule,
     FormsModule,
-    NgbScrollSpyModule
+    NgbScrollSpyModule,
+    DragDropModule
   ],
   providers: [
     provideClientHydration(),

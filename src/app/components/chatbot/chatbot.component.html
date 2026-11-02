@@ -1,214 +1,269 @@
-<!-- Floating Chatbot Container -->
-<div class="chatbot-wrapper" [class.open]="isOpen">
+<div class="chatbot-boundary-container">
+  <!-- Floating Chatbot Container -->
+  <div class="chatbot-wrapper" [class.open]="isOpen">
 
-  <!-- Teaser Bubble (when closed) -->
-  <div *ngIf="!isOpen && showTeaser" class="chatbot-teaser" (click)="toggleChat()">
-    <div class="teaser-content">
-      <span class="teaser-emoji">👋</span>
-      <div class="teaser-text">
-        <strong>Hi there!</strong>
-        <span>Have questions about Techxle? Ask me!</span>
-      </div>
-    </div>
-    <button type="button" class="teaser-close" (click)="dismissTeaser($event)" aria-label="Dismiss">&times;</button>
-  </div>
-
-  <!-- Launcher Floating Button -->
-  <button 
-    *ngIf="!isOpen" 
-    type="button" 
-    class="chatbot-launcher" 
-    (click)="toggleChat()" 
-    aria-label="Open AI Assistant"
-    title="Open Techxle AI Assistant">
-    <div class="launcher-robot-container">
-      <picture>
-        <source srcset="assets/images/chatbot/techxle-bot-animated.webp" type="image/webp">
-        <source srcset="assets/images/chatbot/techxle-bot-animated.webp" type="image/webp">
-        <img 
-          src="assets/images/chatbot/techxle-bot-animated.webp" 
-          alt="Techxle AI Assistant" 
-          class="launcher-robot-img" 
-          width="75" height="85" />
-      </picture>
-    </div>
-  </button>
-
-  <!-- Chat Window Dialog -->
-  <div *ngIf="isOpen" class="chatbot-window shadow-lg" [class.minimized]="isMinimized">
-    
-    <!-- Header -->
-    <div class="chatbot-header" (click)="isMinimized ? minimizeChat($event) : null">
-      <div class="chatbot-header-info">
-        <div class="avatar-container">
-          <div class="bot-avatar">
-            <img src="assets/images/chatbot/techxle-bot-avatar.png" alt="Techxle AI" class="bot-avatar-img" />
-          </div>
-          <span class="status-indicator online"></span>
-        </div>
-        <div class="header-text">
-          <h4 class="m-0">Techxle AI Assistant</h4>
-          <span class="status-subtext">Online &bull; Answers website questions</span>
+    <!-- Teaser Bubble (when closed) -->
+    <div *ngIf="!isOpen && showTeaser" class="chatbot-teaser" (click)="toggleChat()">
+      <div class="teaser-content">
+        <span class="teaser-emoji">👋</span>
+        <div class="teaser-text">
+          <strong>Hi there!</strong>
+          <span>Have questions about Techxle? Ask me!</span>
         </div>
       </div>
-
-      <div class="chatbot-header-actions">
-        <!-- Clear chat -->
-        <button 
-          type="button" 
-          class="header-action-btn" 
-          (click)="clearChat()" 
-          title="Clear Conversation"
-          aria-label="Clear Conversation">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="1 4 1 10 7 10"></polyline>
-            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
-          </svg>
-        </button>
-
-        <!-- Minimize -->
-        <button 
-          type="button" 
-          class="header-action-btn" 
-          (click)="minimizeChat($event)" 
-          [title]="isMinimized ? 'Expand' : 'Minimize'"
-          aria-label="Minimize">
-          <svg *ngIf="!isMinimized" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="5" y1="12" x2="19" y2="12"></line>
-          </svg>
-          <svg *ngIf="isMinimized" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="15 3 21 3 21 9"></polyline>
-            <polyline points="9 21 3 21 3 15"></polyline>
-            <line x1="21" y1="3" x2="14" y2="10"></line>
-            <line x1="3" y1="21" x2="10" y2="14"></line>
-          </svg>
-        </button>
-
-        <!-- Close -->
-        <button 
-          type="button" 
-          class="header-action-btn close-btn" 
-          (click)="closeChat($event)" 
-          title="Close Chat"
-          aria-label="Close Chat">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-            <line x1="18" y1="6" x2="6" y2="18"></line>
-            <line x1="6" y1="6" x2="18" y2="18"></line>
-          </svg>
-        </button>
-      </div>
+      <button type="button" class="teaser-close" (click)="dismissTeaser($event)" aria-label="Dismiss">&times;</button>
     </div>
 
-    <!-- Collapsible Chat Body & Footer -->
-    <div class="chatbot-body-wrapper" *ngIf="!isMinimized">
+    <!-- Launcher Floating Button -->
+    <button 
+      *ngIf="!isOpen" 
+      type="button" 
+      class="chatbot-launcher" 
+      (click)="toggleChat()" 
+      aria-label="Open AI Assistant"
+      title="Open Techxle AI Assistant">
+      <div class="launcher-robot-container">
+        <picture>
+          <source srcset="assets/images/chatbot/techxle-bot-animated.webp" type="image/webp">
+          <source srcset="assets/images/chatbot/techxle-bot-animated.webp" type="image/webp">
+          <img 
+            src="assets/images/chatbot/techxle-bot-animated.webp" 
+            alt="Techxle AI Assistant" 
+            class="launcher-robot-img" 
+            width="75" height="85" />
+        </picture>
+      </div>
+    </button>
+
+    <!-- Chat Window Dialog -->
+    <div 
+      #chatWindow
+      *ngIf="isOpen" 
+      class="chatbot-window shadow-lg" 
+      [class.minimized]="isMinimized"
+      [class.is-draggable]="!isMobile"
+      [class.is-moved]="isMoved"
+      cdkDrag
+      cdkDragBoundary=".chatbot-boundary-container"
+      [cdkDragDisabled]="isMobile"
+      [cdkDragFreeDragPosition]="dragPosition"
+      (cdkDragEnded)="onDragEnded($event)">
       
-      <!-- Messages Container -->
-      <div class="chatbot-messages" #scrollContainer>
+      <!-- Header (Drag Handle) -->
+      <div 
+        class="chatbot-header" 
+        cdkDragHandle
+        [title]="!isMobile ? 'Drag to move chat panel • Double-click to reset position' : ''"
+        (dblclick)="resetPosition($event)"
+        (click)="isMinimized ? minimizeChat($event) : null">
         
-        <div *ngFor="let msg of messages" class="message-row" [class.user-row]="msg.sender === 'user'" [class.bot-row]="msg.sender === 'bot'">
-          
-          <!-- Bot Avatar -->
-          <div *ngIf="msg.sender === 'bot'" class="msg-avatar">
-            <img src="assets/images/chatbot/techxle-bot-avatar.png" alt="Techxle AI" class="msg-avatar-img" />
+        <div class="chatbot-header-info">
+          <!-- Visual Drag Handle Grip -->
+          <div *ngIf="!isMobile" class="drag-grip-indicator" title="Drag to move chat panel anywhere on screen">
+            <svg width="8" height="14" viewBox="0 0 8 14" fill="currentColor">
+              <circle cx="2" cy="2" r="1.2"/>
+              <circle cx="6" cy="2" r="1.2"/>
+              <circle cx="2" cy="7" r="1.2"/>
+              <circle cx="6" cy="7" r="1.2"/>
+              <circle cx="2" cy="12" r="1.2"/>
+              <circle cx="6" cy="12" r="1.2"/>
+            </svg>
           </div>
 
-          <div class="msg-content-wrapper">
-            <!-- Bubble -->
-            <div class="message-bubble" [class.user-bubble]="msg.sender === 'user'" [class.bot-bubble]="msg.sender === 'bot'">
-              <div class="bubble-text" [innerHTML]="formatMessageText(msg.text)"></div>
+          <div class="avatar-container">
+            <div class="bot-avatar">
+              <img src="assets/images/chatbot/techxle-bot-avatar.png" alt="Techxle AI" class="bot-avatar-img" />
             </div>
-
-            <!-- Action Pills (if any) -->
-            <div *ngIf="msg.actions && msg.actions.length > 0" class="message-actions mt-2">
-              <button 
-                *ngFor="let act of msg.actions" 
-                type="button" 
-                class="action-pill" 
-                (click)="handleAction(act)">
-                <span>{{ act.label }}</span>
-                <span class="action-arrow">&rarr;</span>
-              </button>
-            </div>
-
-            <!-- Follow-up suggestion pills inside bot response -->
-            <div *ngIf="msg.suggestions && msg.suggestions.length > 0" class="message-suggestions mt-2">
-              <span class="suggestions-label">Suggested:</span>
-              <button 
-                *ngFor="let sugg of msg.suggestions" 
-                type="button" 
-                class="suggestion-chip" 
-                (click)="selectSuggestion(sugg)">
-                {{ sugg }}
-              </button>
-            </div>
-
-            <span class="message-time">
-              {{ msg.timestamp | date:'shortTime' }}
-            </span>
+            <span class="status-indicator online"></span>
           </div>
-
-        </div>
-
-        <!-- Typing Indicator -->
-        <div *ngIf="isTyping" class="message-row bot-row typing-row">
-          <div class="msg-avatar">
-            <img src="assets/images/chatbot/techxle-bot-avatar.png" alt="Techxle AI" class="msg-avatar-img" />
-          </div>
-          <div class="message-bubble bot-bubble typing-bubble">
-            <div class="typing-dots">
-              <span></span>
-              <span></span>
-              <span></span>
-            </div>
+          <div class="header-text">
+            <h4 class="m-0">Techxle AI Assistant</h4>
+            <span class="status-subtext">Online &bull; Answers website questions</span>
           </div>
         </div>
 
-      </div>
-
-      <!-- Quick Suggestion Bar -->
-      <div class="quick-suggestions-bar" *ngIf="!isTyping">
-        <div class="chips-scroll">
+        <div class="chatbot-header-actions">
+          <!-- Reset Position (visible when moved) -->
           <button 
-            *ngFor="let suggestion of quickSuggestions" 
+            *ngIf="isMoved && !isMobile"
             type="button" 
-            class="quick-chip" 
-            (click)="selectSuggestion(suggestion)">
-            {{ suggestion }}
-          </button>
-        </div>
-      </div>
-
-      <!-- Input Footer -->
-      <div class="chatbot-footer">
-        <form (ngSubmit)="sendMessage()" class="chatbot-input-form">
-          <input 
-            #queryInput
-            type="text" 
-            [(ngModel)]="userInput" 
-            name="query" 
-            class="chatbot-input" 
-            placeholder="Ask about Techxle services, solutions..." 
-            autocomplete="off"
-            [disabled]="isTyping" />
-          <button 
-            type="submit" 
-            class="chatbot-send-btn" 
-            [disabled]="!userInput.trim() || isTyping"
-            title="Send Message"
-            aria-label="Send Message">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="22" y1="2" x2="11" y2="13"></line>
-              <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+            class="header-action-btn reset-pos-btn" 
+            (mousedown)="$event.stopPropagation()"
+            (touchstart)="$event.stopPropagation()"
+            (click)="resetPosition($event)" 
+            title="Reset position to bottom-right"
+            aria-label="Reset position">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path>
+              <polyline points="21 3 21 8 16 8"></polyline>
+              <path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path>
+              <polyline points="3 21 3 16 8 16"></polyline>
             </svg>
           </button>
-        </form>
-        <div class="chatbot-footer-brand">
-          <span>Powered by Techxle AI &bull; Belief Drives Innovation</span>
+
+          <!-- Clear chat -->
+          <button 
+            type="button" 
+            class="header-action-btn" 
+            (mousedown)="$event.stopPropagation()"
+            (touchstart)="$event.stopPropagation()"
+            (click)="clearChat()" 
+            title="Clear Conversation"
+            aria-label="Clear Conversation">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="1 4 1 10 7 10"></polyline>
+              <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+            </svg>
+          </button>
+
+          <!-- Minimize -->
+          <button 
+            type="button" 
+            class="header-action-btn" 
+            (mousedown)="$event.stopPropagation()"
+            (touchstart)="$event.stopPropagation()"
+            (click)="minimizeChat($event)" 
+            [title]="isMinimized ? 'Expand' : 'Minimize'"
+            aria-label="Minimize">
+            <svg *ngIf="!isMinimized" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            <svg *ngIf="isMinimized" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="15 3 21 3 21 9"></polyline>
+              <polyline points="9 21 3 21 3 15"></polyline>
+              <line x1="21" y1="3" x2="14" y2="10"></line>
+              <line x1="3" y1="21" x2="10" y2="14"></line>
+            </svg>
+          </button>
+
+          <!-- Close -->
+          <button 
+            type="button" 
+            class="header-action-btn close-btn" 
+            (mousedown)="$event.stopPropagation()"
+            (touchstart)="$event.stopPropagation()"
+            (click)="closeChat($event)" 
+            title="Close Chat"
+            aria-label="Close Chat">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
         </div>
+      </div>
+
+      <!-- Collapsible Chat Body & Footer -->
+      <div class="chatbot-body-wrapper" *ngIf="!isMinimized">
+        
+        <!-- Messages Container -->
+        <div class="chatbot-messages" #scrollContainer>
+          
+          <div *ngFor="let msg of messages" class="message-row" [class.user-row]="msg.sender === 'user'" [class.bot-row]="msg.sender === 'bot'">
+            
+            <!-- Bot Avatar -->
+            <div *ngIf="msg.sender === 'bot'" class="msg-avatar">
+              <img src="assets/images/chatbot/techxle-bot-avatar.png" alt="Techxle AI" class="msg-avatar-img" />
+            </div>
+
+            <div class="msg-content-wrapper">
+              <!-- Bubble -->
+              <div class="message-bubble" [class.user-bubble]="msg.sender === 'user'" [class.bot-bubble]="msg.sender === 'bot'">
+                <div class="bubble-text" [innerHTML]="formatMessageText(msg.text)"></div>
+              </div>
+
+              <!-- Action Pills (if any) -->
+              <div *ngIf="msg.actions && msg.actions.length > 0" class="message-actions mt-2">
+                <button 
+                  *ngFor="let act of msg.actions" 
+                  type="button" 
+                  class="action-pill" 
+                  (click)="handleAction(act)">
+                  <span>{{ act.label }}</span>
+                  <span class="action-arrow">&rarr;</span>
+                </button>
+              </div>
+
+              <!-- Follow-up suggestion pills inside bot response -->
+              <div *ngIf="msg.suggestions && msg.suggestions.length > 0" class="message-suggestions mt-2">
+                <span class="suggestions-label">Suggested:</span>
+                <button 
+                  *ngFor="let sugg of msg.suggestions" 
+                  type="button" 
+                  class="suggestion-chip" 
+                  (click)="selectSuggestion(sugg)">
+                  {{ sugg }}
+                </button>
+              </div>
+
+              <span class="message-time">
+                {{ msg.timestamp | date:'shortTime' }}
+              </span>
+            </div>
+
+          </div>
+
+          <!-- Typing Indicator -->
+          <div *ngIf="isTyping" class="message-row bot-row typing-row">
+            <div class="msg-avatar">
+              <img src="assets/images/chatbot/techxle-bot-avatar.png" alt="Techxle AI" class="msg-avatar-img" />
+            </div>
+            <div class="message-bubble bot-bubble typing-bubble">
+              <div class="typing-dots">
+                <span></span>
+                <span></span>
+                <span></span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Quick Suggestion Bar -->
+        <div class="quick-suggestions-bar" *ngIf="!isTyping">
+          <div class="chips-scroll">
+            <button 
+              *ngFor="let suggestion of quickSuggestions" 
+              type="button" 
+              class="quick-chip" 
+              (click)="selectSuggestion(suggestion)">
+              {{ suggestion }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Input Footer -->
+        <div class="chatbot-footer">
+          <form (ngSubmit)="sendMessage()" class="chatbot-input-form">
+            <input 
+              #queryInput
+              type="text" 
+              [(ngModel)]="userInput" 
+              name="query" 
+              class="chatbot-input" 
+              placeholder="Ask about Techxle services, solutions..." 
+              autocomplete="off"
+              [disabled]="isTyping" />
+            <button 
+              type="submit" 
+              class="chatbot-send-btn" 
+              [disabled]="!userInput.trim() || isTyping"
+              title="Send Message"
+              aria-label="Send Message">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="22" y1="2" x2="11" y2="13"></line>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+              </svg>
+            </button>
+          </form>
+          <div class="chatbot-footer-brand">
+            <span>Powered by Techxle AI &bull; Belief Drives Innovation</span>
+          </div>
+        </div>
+
       </div>
 
     </div>
 
   </div>
-
 </div>

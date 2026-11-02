@@ -1,6 +1,7 @@
 import { Component, OnInit, AfterViewChecked, ElementRef, ViewChild, HostListener } from '@angular/core';
 import { Router } from '@angular/router';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { CdkDragEnd } from '@angular/cdk/drag-drop';
 import { ChatbotService, ChatMessage, ChatAction } from '../../services/chatbot.service';
 
 @Component({
@@ -11,6 +12,7 @@ import { ChatbotService, ChatMessage, ChatAction } from '../../services/chatbot.
 export class ChatbotComponent implements OnInit, AfterViewChecked {
   @ViewChild('scrollContainer') private scrollContainer?: ElementRef<HTMLDivElement>;
   @ViewChild('queryInput') private queryInput?: ElementRef<HTMLInputElement>;
+  @ViewChild('chatWindow') private chatWindowRef?: ElementRef<HTMLDivElement>;
 
   isOpen = false;
   isMinimized = false;
@@ -20,6 +22,14 @@ export class ChatbotComponent implements OnInit, AfterViewChecked {
   showTeaser = true;
   messages: ChatMessage[] = [];
   quickSuggestions: string[] = [];
+
+  // Drag and drop position tracking
+  dragPosition = { x: 0, y: 0 };
+  isMobile = false;
+
+  get isMoved(): boolean {
+    return Math.abs(this.dragPosition.x) > 10 || Math.abs(this.dragPosition.y) > 10;
+  }
 
   private needsScroll = false;
   private readonly STORAGE_KEY = 'techxle_chatbot_conversation_v1';
@@ -33,6 +43,7 @@ export class ChatbotComponent implements OnInit, AfterViewChecked {
   ngOnInit(): void {
     this.quickSuggestions = this.chatbotService.getQuickSuggestions();
     this.loadHistory();
+    this.checkMobile();
 
     // Auto-hide the teaser after 10 seconds if not interacted
     setTimeout(() => {
@@ -45,6 +56,61 @@ export class ChatbotComponent implements OnInit, AfterViewChecked {
       this.scrollToBottom();
       this.needsScroll = false;
     }
+  }
+
+  @HostListener('window:resize')
+  onResize(): void {
+    this.checkMobile();
+    if (this.isOpen && !this.isMinimized && this.isMoved) {
+      this.clampPositionToViewport();
+    }
+  }
+
+  checkMobile(): void {
+    if (typeof window !== 'undefined') {
+      this.isMobile = window.innerWidth <= 576;
+    }
+  }
+
+  onDragEnded(event: CdkDragEnd): void {
+    const pos = event.source.getFreeDragPosition();
+    this.dragPosition = { x: pos.x, y: pos.y };
+  }
+
+  resetPosition(event?: MouseEvent): void {
+    if (event) {
+      event.stopPropagation();
+    }
+    this.dragPosition = { x: 0, y: 0 };
+  }
+
+  clampPositionToViewport(): void {
+    if (typeof window === 'undefined' || !this.chatWindowRef?.nativeElement) {
+      return;
+    }
+    setTimeout(() => {
+      if (!this.chatWindowRef?.nativeElement) return;
+      const rect = this.chatWindowRef.nativeElement.getBoundingClientRect();
+      let newX = this.dragPosition.x;
+      let newY = this.dragPosition.y;
+
+      if (rect.bottom > window.innerHeight - 10) {
+        newY -= (rect.bottom - (window.innerHeight - 10));
+      }
+      if (rect.top < 10) {
+        newY += (10 - rect.top);
+      }
+      if (rect.right > window.innerWidth - 10) {
+        newX -= (rect.right - (window.innerWidth - 10));
+      }
+      if (rect.left < 10) {
+        newX += (10 - rect.left);
+      }
+
+      if (newX !== this.dragPosition.x || newY !== this.dragPosition.y) {
+        this.dragPosition = { x: newX, y: newY };
+      }
+    }, 60);
   }
 
   toggleChat(): void {
@@ -63,6 +129,9 @@ export class ChatbotComponent implements OnInit, AfterViewChecked {
   minimizeChat(event: MouseEvent): void {
     event.stopPropagation();
     this.isMinimized = !this.isMinimized;
+    if (!this.isMinimized) {
+      this.clampPositionToViewport();
+    }
   }
 
   closeChat(event?: MouseEvent): void {
