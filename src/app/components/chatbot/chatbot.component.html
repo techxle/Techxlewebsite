@@ -58,18 +58,6 @@
         (click)="isMinimized ? minimizeChat($event) : null">
         
         <div class="chatbot-header-info">
-          <!-- Visual Drag Handle Grip -->
-          <div *ngIf="!isMobile" class="drag-grip-indicator" title="Drag to move chat panel anywhere on screen">
-            <svg width="8" height="14" viewBox="0 0 8 14" fill="currentColor">
-              <circle cx="2" cy="2" r="1.2"/>
-              <circle cx="6" cy="2" r="1.2"/>
-              <circle cx="2" cy="7" r="1.2"/>
-              <circle cx="6" cy="7" r="1.2"/>
-              <circle cx="2" cy="12" r="1.2"/>
-              <circle cx="6" cy="12" r="1.2"/>
-            </svg>
-          </div>
-
           <div class="avatar-container">
             <div class="bot-avatar">
               <img src="assets/images/chatbot/techxle-bot-avatar.png" alt="Techxle AI" class="bot-avatar-img" />
