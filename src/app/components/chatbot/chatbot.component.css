@@ -154,7 +154,7 @@
   max-width: calc(100vw - 32px);
   height: 590px;
   max-height: calc(100vh - 80px);
-  background: #ffffff;
+  background: transparent;
   border-radius: 20px;
   overflow: hidden;
   display: flex;
@@ -323,7 +323,7 @@
   flex-direction: column;
   flex: 1;
   min-height: 0;
-  background: #f8fafc;
+  background: transparent;
 }
 
 /* Messages area */
