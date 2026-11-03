@@ -7,7 +7,7 @@ export interface ChatAction {
   route?: string;
   url?: string;
   query?: string;
-  type: 'route' | 'link' | 'query';
+  type: 'route' | 'link' | 'query' | 'email';
 }
 
 export interface ChatMessage {
@@ -17,6 +17,12 @@ export interface ChatMessage {
   timestamp: Date;
   actions?: ChatAction[];
   suggestions?: string[];
+  isUnknown?: boolean;
+  needsUserEmail?: boolean;
+  userQuery?: string;
+  fromEmail?: string;
+  emailStatus?: 'pending' | 'sending' | 'sent' | 'error';
+  emailSent?: boolean;
 }
 
 export interface KnowledgeItem {
@@ -539,38 +545,130 @@ How can I help you today?`,
   }
 
   /**
-   * Evaluates query against knowledge items using multi-tiered semantic & keyword scoring.
+   * Evaluates query against knowledge items using multi-tiered semantic & keyword scoring,
+   * with natural ChatGPT-like conversational intelligence for greetings, small talk, and identity.
    */
   private findBestAnswer(query: string): ChatMessage {
-    const qLower = query.toLowerCase();
-    const qWords = qLower.replace(/[^\w\s]/g, ' ').split(/\s+/).filter(w => w.length > 2);
+    const qLower = query.toLowerCase().trim();
 
-    // 1. Direct Greetings & Pleasantries
-    if (/^(hi|hello|hey|greetings|good\s*(morning|afternoon|evening)|hola|namaste)/i.test(qLower)) {
+    // 1. ChatGPT-like "How are you?" & status check
+    if (/^(how\s+are\s+you|how\s+are\s+you\s+doing|how('?s|\s+is)\s+it\s+going|how('?s|\s+is)\s+everything|how\s+do\s+you\s+do|what'?s\s+up|sup\b|how\s+have\s+you\s+been)\b/i.test(qLower)) {
       return {
         id: this.generateId(),
         sender: 'bot',
-        text: `Hello! 😊 How can I assist you with Techxle's services and solutions today? You can ask me about:
-- **Our Services:** AI Applications, Cloud, Power Platform, DevOps, Full Stack
-- **Solutions:** LabAx LIMS, UAE ERP, Agentic RAG
-- **Offices & Contact Details:** USA and India locations`,
+        text: `I'm doing great, thank you for asking! 😊 
+
+As Techxle's AI assistant, I'm always ready to help. How are you doing today? Let me know what you'd like to explore about our digital services or enterprise solutions!`,
         timestamp: new Date(),
+        userQuery: query,
+        isUnknown: false,
         suggestions: [
+          'I am doing great!',
           'What services do you offer?',
           'Tell me about LabAx LIMS',
-          'Contact details'
+          'Where are your offices?'
         ]
       };
     }
 
-    // 2. Thank you
-    if (/^(thanks|thank you|thx|appreciate it|great|awesome)/i.test(qLower)) {
+    // 2. ChatGPT-like User feelings / "I'm good", "doing well", "fine"
+    if (/^(i'?m\s+(good|fine|doing\s+well|great|awesome|doing\s+good|alright|ok|okay)|doing\s+(well|good|great)|fine\s+thank(s|\s+you)|all\s+good|very\s+well)\b/i.test(qLower)) {
       return {
         id: this.generateId(),
         sender: 'bot',
-        text: `You're very welcome! If you have any more questions about Techxle or would like to schedule a consultation with our team, feel free to ask. Have a wonderful day! 🚀`,
+        text: `Glad to hear that! 😊 
+
+How can I assist you with Techxle today? Feel free to ask about our software engineering services, flagship solutions (like LabAx LIMS, UAE ERP, and Agentic RAG), or scheduling a consultation.`,
         timestamp: new Date(),
+        userQuery: query,
+        isUnknown: false,
+        suggestions: [
+          'What services do you offer?',
+          'Tell me about Agentic RAG',
+          'Where are your offices?'
+        ]
+      };
+    }
+
+    // 3. ChatGPT-like Greetings ("hi", "hello", "hey", "good morning", etc.)
+    if (/^(hi|hello|hey|heyy+|hiya|greetings|good\s*(morning|afternoon|evening|day)|hola|namaste|bonjour)\b/i.test(qLower)) {
+      return {
+        id: this.generateId(),
+        sender: 'bot',
+        text: `Hello there! 👋 It's wonderful to connect with you. 
+
+I'm Techxle's AI Assistant. How can I help you today? You can ask me about our **engineering services**, specialized platforms like **LabAx LIMS** and **Agentic RAG**, our offices, or how we can help your business innovate.`,
+        timestamp: new Date(),
+        userQuery: query,
+        isUnknown: false,
+        suggestions: [
+          'How are you?',
+          'What services do you offer?',
+          'Tell me about LabAx LIMS',
+          'Where are your offices?'
+        ]
+      };
+    }
+
+    // 4. Identity & Name ("Who are you?", "What is your name?", "Are you ChatGPT?")
+    if (/(who\s+are\s+you|what\s+is\s+your\s+name|what('?s|\s+is)\s+your\s+name|what\s+are\s+you|are\s+you\s+a\s+bot|are\s+you\s+(ai|an\s+ai|real|human)|are\s+you\s+chatgpt|tell\s+me\s+about\s+yourself)/i.test(qLower)) {
+      return {
+        id: this.generateId(),
+        sender: 'bot',
+        text: `I'm **Techxle AI Assistant**! 🤖 
+
+Think of me as your virtual guide to Techxle. I was built by the engineering and AI team at Techxle to answer your questions about our technology services, specialized platforms (like LabAx LIMS, ERP, and Agentic RAG), and connect you with our specialists.
+
+What would you like to know more about?`,
+        timestamp: new Date(),
+        userQuery: query,
+        isUnknown: false,
+        suggestions: [
+          'What can you do?',
+          'What services do you offer?',
+          'Tell me about Techxle'
+        ]
+      };
+    }
+
+    // 5. Capabilities ("What can you do?", "How can you help?")
+    if (/(what\s+can\s+you\s+do|how\s+can\s+you\s+help|what\s+do\s+you\s+do|help\s+me|what\s+can\s+i\s+ask)/i.test(qLower)) {
+      return {
+        id: this.generateId(),
+        sender: 'bot',
+        text: `I can help you with a wide range of topics across Techxle:
+
+- 🤖 **AI & Cloud Engineering:** Machine learning, Agentic RAG, cloud migration (AWS, Azure, GCP), and DevOps CI/CD.
+- 🧪 **Life Sciences & Laboratory Informatics:** LabAx LIMS, sample tracking, and 21 CFR Part 11 compliance.
+- 🏢 **Enterprise Platforms:** UAE VAT-compliant ERP and Microsoft Power Platform workflows.
+- 📍 **Offices & Global Reach:** Our Dover, Delaware (USA) HQ and Coimbatore (India) offshore center.
+- ✉️ **Direct Support:** If you have a specific requirement I don't know, I can send it directly to our team!
+
+What would you like to explore?`,
+        timestamp: new Date(),
+        userQuery: query,
+        isUnknown: false,
+        suggestions: [
+          'What services do you offer?',
+          'Tell me about LabAx LIMS',
+          'Where are your offices?'
+        ]
+      };
+    }
+
+    // 6. Thank you
+    if (/^(thanks|thank\s+you|thx|thank\s+you\s+so\s+much|appreciate\s+it|many\s+thanks)\b/i.test(qLower)) {
+      return {
+        id: this.generateId(),
+        sender: 'bot',
+        text: `You're very welcome! 😊 Always happy to assist. 
+
+If you have any more questions about our services or would like to schedule a consultation with our team, feel free to ask anytime. Have a fantastic day! 🚀`,
+        timestamp: new Date(),
+        userQuery: query,
+        isUnknown: false,
         actions: [
+          { label: 'Explore Services', route: '/services', type: 'route' },
           { label: 'Contact Techxle', route: '/contact-us', type: 'route' }
         ],
         suggestions: [
@@ -580,7 +678,50 @@ How can I help you today?`,
       };
     }
 
-    // 3. Score all knowledge items
+    // 7. Goodbye
+    if (/^(bye|goodbye|see\s+you|cya|take\s+care|have\s+a\s+nice\s+day|talk\s+to\s+you\s+later)\b/i.test(qLower)) {
+      return {
+        id: this.generateId(),
+        sender: 'bot',
+        text: `Goodbye! 👋 Thank you for chatting with me. Have a wonderful day ahead, and feel free to return whenever you need assistance!`,
+        timestamp: new Date(),
+        userQuery: query,
+        isUnknown: false
+      };
+    }
+
+    // 8. Acknowledgments ("ok", "okay", "cool", "nice", "got it")
+    if (/^(ok|okay|alright|got\s+it|sure|cool|nice|understood|perfect|awesome)\b/i.test(qLower)) {
+      return {
+        id: this.generateId(),
+        sender: 'bot',
+        text: `Awesome! 👍 Let me know if you have any questions or if you'd like to explore any of our solutions.`,
+        timestamp: new Date(),
+        userQuery: query,
+        isUnknown: false,
+        suggestions: [
+          'What services do you offer?',
+          'Tell me about LabAx LIMS',
+          'Contact Techxle'
+        ]
+      };
+    }
+
+    // Common stop-words that must NOT trigger keyword matches on their own
+    const stopWords = new Set([
+      'what', 'who', 'how', 'when', 'where', 'why', 'can', 'you', 'your', 'have',
+      'does', 'with', 'about', 'tell', 'give', 'some', 'this', 'that', 'from',
+      'they', 'them', 'their', 'there', 'please', 'know', 'want', 'need', 'like',
+      'help', 'more', 'much', 'many', 'good', 'would', 'could', 'should', 'the',
+      'and', 'for', 'are', 'was', 'were', 'been', 'being', 'shall', 'will'
+    ]);
+
+    const qWords = qLower
+      .replace(/[^\w\s]/g, ' ')
+      .split(/\s+/)
+      .filter(w => w.length > 2 && !stopWords.has(w));
+
+    // 9. Score all knowledge items
     let bestItem: KnowledgeItem | null = null;
     let highestScore = 0;
 
@@ -594,9 +735,11 @@ How can I help you today?`,
         }
       }
 
-      // Keyword matches
+      // Keyword matches (skip stop-words)
       for (const kw of item.keywords) {
         const kwLower = kw.toLowerCase();
+        if (stopWords.has(kwLower)) continue;
+
         if (qLower.includes(kwLower)) {
           score += 10;
         }
@@ -610,7 +753,7 @@ How can I help you today?`,
       }
 
       // Title word matches
-      const titleWords = item.title.toLowerCase().split(/\s+/);
+      const titleWords = item.title.toLowerCase().split(/\s+/).filter(w => !stopWords.has(w));
       for (const tw of titleWords) {
         if (tw.length > 3 && qLower.includes(tw)) {
           score += 12;
@@ -623,13 +766,15 @@ How can I help you today?`,
       }
     }
 
-    // 4. Threshold check: if score is sufficient, return match
-    if (bestItem && highestScore >= 15) {
+    // 10. Threshold check: if score is sufficient, return match
+    if (bestItem && highestScore >= 20) {
       return {
         id: this.generateId(),
         sender: 'bot',
         text: `${bestItem.details}`,
         timestamp: new Date(),
+        userQuery: query,
+        isUnknown: false,
         actions: bestItem.actions,
         suggestions: bestItem.suggestions || [
           'Explore All Services',
@@ -639,19 +784,22 @@ How can I help you today?`,
       };
     }
 
-    // 5. Intelligent Fallback
+    // 11. Query is a MAJOR UNANSWERED QUESTION:
+    // Ask the user for their "from mail" so we can forward their question to sampletesting.567123@gmail.com
+    const targetEmail = 'sampletesting.567123@gmail.com';
     return {
       id: this.generateId(),
       sender: 'bot',
-      text: `I'm happy to help you with information about **Techxle**. 
+      text: `I don't have the exact answer for your question:
+**"${query}"**
 
-While I didn't find an exact match for *"${query}"*, here is what I can tell you about:
-- **Services:** AI Application, Power Platform, Cloud App Development, Staffing, Full Stack, UI/UX, and DevOps.
-- **Flagship Solutions:** LabAx LIMS, ERP Solutions, and Agentic RAG.
-- **Company & Offices:** Located in Dover, Delaware (USA) and Coimbatore (India).
+I'd be glad to forward this directly to our technical team at **${targetEmail}**. 
 
-You can also reach out directly to our team via our [Contact Page](/contact-us) or email us at **[contact@techxl.org](mailto:contact@techxl.org)**.`,
+Please enter your email address below so our experts can review your question and respond back to you directly:`,
       timestamp: new Date(),
+      userQuery: query,
+      isUnknown: true,
+      needsUserEmail: true,
       actions: [
         { label: 'View All Services', route: '/services', type: 'route' },
         { label: 'View All Solutions', route: '/solutions', type: 'route' },
@@ -660,8 +808,7 @@ You can also reach out directly to our team via our [Contact Page](/contact-us) 
       suggestions: [
         'What services do you offer?',
         'Tell me about LabAx LIMS',
-        'What is Agentic RAG?',
-        'How can I contact Techxle?'
+        'Where are your offices?'
       ]
     };
   }

@@ -14,6 +14,9 @@ export class ChatbotComponent implements OnInit, AfterViewChecked {
   @ViewChild('queryInput') private queryInput?: ElementRef<HTMLInputElement>;
   @ViewChild('chatWindow') private chatWindowRef?: ElementRef<HTMLDivElement>;
 
+  readonly SUPPORT_EMAIL = 'sampletesting.567123@gmail.com';
+  readonly FORMSUBMIT_TOKEN = '28f46c18e1313472aea9438abd17fb2c';
+
   isOpen = false;
   isMinimized = false;
   userInput = '';
@@ -22,6 +25,12 @@ export class ChatbotComponent implements OnInit, AfterViewChecked {
   showTeaser = true;
   messages: ChatMessage[] = [];
   quickSuggestions: string[] = [];
+
+  // State for asking user's from email for unanswered major questions
+  pendingQueryForEmail: string | null = null;
+  pendingMsgForEmail: ChatMessage | null = null;
+  userEnteredEmail = '';
+  emailInputError = '';
 
   // Drag and drop position tracking
   dragPosition = { x: 0, y: 0 };
@@ -153,6 +162,30 @@ export class ChatbotComponent implements OnInit, AfterViewChecked {
       return;
     }
 
+    // Check if the user is replying with their "from email" for a pending major question
+    if (this.pendingQueryForEmail) {
+      const emailRegex = /([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/;
+      const match = query.match(emailRegex);
+      if (match) {
+        const fromEmail = match[1];
+        const userMsg: ChatMessage = {
+          id: 'usr-' + Date.now(),
+          sender: 'user',
+          text: query,
+          timestamp: new Date()
+        };
+        this.messages.push(userMsg);
+        this.userInput = '';
+        this.needsScroll = true;
+        this.saveHistory();
+
+        const pendingQuery = this.pendingQueryForEmail;
+        const targetMsg = this.pendingMsgForEmail;
+        this.sendQueryEmailWithFromAddress(fromEmail, pendingQuery, targetMsg);
+        return;
+      }
+    }
+
     // User message
     const userMsg: ChatMessage = {
       id: 'usr-' + Date.now(),
@@ -170,19 +203,34 @@ export class ChatbotComponent implements OnInit, AfterViewChecked {
     this.chatbotService.askQuestion(query).subscribe({
       next: (botMsg) => {
         this.isTyping = false;
+        botMsg.userQuery = query;
+        if (botMsg.needsUserEmail) {
+          this.pendingQueryForEmail = query;
+          this.pendingMsgForEmail = botMsg;
+          botMsg.emailStatus = 'pending';
+        }
         this.messages.push(botMsg);
         this.needsScroll = true;
         this.saveHistory();
       },
       error: () => {
         this.isTyping = false;
-        this.messages.push({
+        const errMsg: ChatMessage = {
           id: 'err-' + Date.now(),
           sender: 'bot',
-          text: 'I apologize, but I encountered an issue processing your request. Please try again or visit our [Contact Page](/contact-us).',
+          text: `I apologize, but I encountered an issue processing your request: **"${query}"**.\n\nPlease share your email address so our team can follow up with you directly:`,
           timestamp: new Date(),
-          actions: [{ label: 'Go to Contact Page', route: '/contact-us', type: 'route' }]
-        });
+          userQuery: query,
+          isUnknown: true,
+          needsUserEmail: true,
+          emailStatus: 'pending',
+          actions: [
+            { label: 'Go to Contact Page', route: '/contact-us', type: 'route' }
+          ]
+        };
+        this.pendingQueryForEmail = query;
+        this.pendingMsgForEmail = errMsg;
+        this.messages.push(errMsg);
         this.needsScroll = true;
         this.saveHistory();
       }
@@ -192,11 +240,115 @@ export class ChatbotComponent implements OnInit, AfterViewChecked {
   handleAction(action: ChatAction): void {
     if (action.type === 'route' && action.route) {
       this.router.navigateByUrl(action.route);
-      // On mobile we can optionally close, or leave open
     } else if (action.type === 'link' && action.url) {
       window.open(action.url, '_blank');
     } else if (action.type === 'query' && action.query) {
       this.sendMessage(action.query);
+    }
+  }
+
+  /**
+   * User clicks "Send to Support" on the inline email prompt.
+   */
+  submitUserEmail(msg: ChatMessage): void {
+    const email = this.userEnteredEmail.trim();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      this.emailInputError = 'Please enter a valid email address (e.g. name@company.com)';
+      return;
+    }
+    this.emailInputError = '';
+    const q = msg.userQuery || this.pendingQueryForEmail || 'Inquiry regarding Techxle';
+    this.sendQueryEmailWithFromAddress(email, q, msg);
+  }
+
+  /**
+   * Directly sends the unanswered query to sampletesting.567123@gmail.com
+   * with the user's provided "from" email as reply-to.
+   */
+  sendQueryEmailWithFromAddress(fromEmail: string, query: string, msg: ChatMessage | null): void {
+    if (typeof window === 'undefined' || !fromEmail || !query) {
+      return;
+    }
+
+    if (msg) {
+      msg.emailStatus = 'sending';
+      msg.fromEmail = fromEmail;
+    }
+
+    fetch(`https://formsubmit.co/ajax/${this.FORMSUBMIT_TOKEN}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({
+        email: fromEmail,
+        _replyto: fromEmail,
+        _subject: query,
+        message: query,
+        _captcha: 'false'
+      })
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (msg) {
+          msg.emailStatus = 'sent';
+          msg.emailSent = true;
+        }
+        this.pendingQueryForEmail = null;
+        this.pendingMsgForEmail = null;
+        this.userEnteredEmail = '';
+
+        // Add friendly confirmation bot message to the conversation
+        const confirmMsg: ChatMessage = {
+          id: 'confirm-' + Date.now(),
+          sender: 'bot',
+          text: `✅ **Query Sent Successfully!**
+
+I have forwarded your question to **${this.SUPPORT_EMAIL}** with your email **${fromEmail}** as the reply address:
+> *"${query}"*
+
+Our specialized team will review your question and respond directly to **${fromEmail}** shortly!`,
+          timestamp: new Date(),
+          isUnknown: false,
+          actions: [
+            { label: 'Explore Services', route: '/services', type: 'route' },
+            { label: 'Explore Solutions', route: '/solutions', type: 'route' },
+            { label: 'Contact Us', route: '/contact-us', type: 'route' }
+          ]
+        };
+
+        this.messages.push(confirmMsg);
+        this.saveHistory();
+        this.needsScroll = true;
+      })
+      .catch(err => {
+        console.warn('Direct email sending issue:', err);
+        if (msg) {
+          msg.emailStatus = 'error';
+        }
+        this.saveHistory();
+      });
+  }
+
+  openGmailWeb(msg: ChatMessage): void {
+    const q = msg.userQuery || msg.text || '';
+    const subject = encodeURIComponent(q);
+    const body = encodeURIComponent(q);
+    const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(this.SUPPORT_EMAIL)}&su=${subject}&body=${body}`;
+    if (typeof window !== 'undefined') {
+      window.open(gmailUrl, '_blank', 'noopener,noreferrer');
+    }
+  }
+
+  openMailto(msg: ChatMessage): void {
+    const q = msg.userQuery || msg.text || '';
+    const subject = encodeURIComponent(q);
+    const body = encodeURIComponent(q);
+    const mailtoUrl = `mailto:${this.SUPPORT_EMAIL}?subject=${subject}&body=${body}`;
+    if (typeof window !== 'undefined') {
+      window.location.href = mailtoUrl;
     }
   }
 

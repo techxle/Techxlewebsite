@@ -642,6 +642,245 @@
   letter-spacing: 0.2px;
 }
 
+/* User Email Prompt Card (Asking "from mail" for Unanswered Major Questions) */
+.user-email-prompt-card {
+  background: #f8fafc;
+  border: 1.5px solid #bfdbfe;
+  border-radius: 12px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  animation: promptSlideIn 0.25s ease-out;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.08);
+}
+
+@keyframes promptSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.prompt-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #1e40af;
+}
+
+.prompt-header svg {
+  color: #2563eb;
+  flex-shrink: 0;
+}
+
+.prompt-input-row {
+  display: flex;
+  gap: 6px;
+}
+
+.user-email-input {
+  flex: 1;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 12px;
+  color: #0f172a;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.user-email-input:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+}
+
+.user-email-submit-btn {
+  background: #2563eb;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
+}
+
+.user-email-submit-btn:hover:not(:disabled) {
+  background: #1d4ed8;
+  transform: translateY(-1px);
+}
+
+.user-email-submit-btn:disabled {
+  background: #94a3b8;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.prompt-error-msg {
+  font-size: 11px;
+  color: #dc2626;
+  font-weight: 500;
+}
+
+.prompt-hint {
+  font-size: 10px;
+  color: #64748b;
+  line-height: 1.3;
+}
+
+.prompt-hint strong {
+  color: #1e40af;
+}
+
+.prompt-quick-launchers {
+  border-top: 1px dashed #cbd5e1;
+  padding-top: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.launchers-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.launchers-buttons {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.quick-launch-pill {
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #334155;
+  border-radius: 12px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.quick-launch-pill:hover {
+  transform: translateY(-1px);
+}
+
+.gmail-pill:hover {
+  background: #ea4335;
+  color: #ffffff;
+  border-color: #ea4335;
+}
+
+.mailto-pill:hover {
+  background: #2563eb;
+  color: #ffffff;
+  border-color: #2563eb;
+}
+
+/* Direct Email Delivery Status for Unanswered Queries */
+.direct-email-status-container {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.direct-email-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-size: 12px;
+  line-height: 1.4;
+  animation: statusFadeIn 0.25s ease-out;
+}
+
+@keyframes statusFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.direct-email-status.sending {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #1e40af;
+}
+
+.direct-email-status.sent {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #166534;
+}
+
+.direct-email-status.sent svg {
+  color: #16a34a;
+  flex-shrink: 0;
+}
+
+.direct-email-status.error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+  flex-wrap: wrap;
+}
+
+.status-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid #93c5fd;
+  border-top-color: #2563eb;
+  border-radius: 50%;
+  animation: spinnerRotate 0.8s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes spinnerRotate {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.status-action-pill {
+  background: #ffffff;
+  border: 1px solid #f87171;
+  color: #b91c1c;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.status-action-pill:hover {
+  background: #b91c1c;
+  color: #ffffff;
+}
+
 /* Animations */
 @keyframes windowFadeIn {
   from {

@@ -160,6 +160,89 @@
                 <div class="bubble-text" [innerHTML]="formatMessageText(msg.text)"></div>
               </div>
 
+              <!-- Ask From Email Input Card for Unanswered Major Questions -->
+              <div *ngIf="msg.needsUserEmail && !msg.emailSent" class="user-email-prompt-card mt-2">
+                <div class="prompt-header">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                    <polyline points="22,6 12,13 2,6"></polyline>
+                  </svg>
+                  <span>Enter your email to receive an answer:</span>
+                </div>
+                <div class="prompt-input-row">
+                  <input 
+                    type="email" 
+                    [(ngModel)]="userEnteredEmail" 
+                    (keyup.enter)="submitUserEmail(msg)"
+                    class="user-email-input" 
+                    placeholder="e.g. yourname@company.com" 
+                    [disabled]="msg.emailStatus === 'sending'" />
+                  <button 
+                    type="button" 
+                    class="user-email-submit-btn" 
+                    [disabled]="msg.emailStatus === 'sending' || !userEnteredEmail.trim()"
+                    (click)="submitUserEmail(msg)">
+                    <span *ngIf="msg.emailStatus !== 'sending'">Send to Support</span>
+                    <span *ngIf="msg.emailStatus === 'sending'">Sending...</span>
+                  </button>
+                </div>
+                <div *ngIf="emailInputError" class="prompt-error-msg">
+                  {{ emailInputError }}
+                </div>
+                <div class="prompt-hint">
+                  Your query will be sent to <strong>{{ SUPPORT_EMAIL }}</strong> with your email as the sender address.
+                </div>
+
+                <!-- Direct Clean Send Buttons (Zero Sponsor Messages) -->
+                <div class="prompt-quick-launchers mt-1">
+                  <span class="launchers-label">Or send directly from your email (Zero sponsor message):</span>
+                  <div class="launchers-buttons">
+                    <button 
+                      type="button" 
+                      class="quick-launch-pill gmail-pill" 
+                      (click)="openGmailWeb(msg)"
+                      title="Open in Gmail with only your query in body">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+                      </svg>
+                      <span>Send via Gmail</span>
+                    </button>
+
+                    <button 
+                      type="button" 
+                      class="quick-launch-pill mailto-pill" 
+                      (click)="openMailto(msg)"
+                      title="Open in Mail App with only your query in body">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                        <polyline points="22,6 12,13 2,6"/>
+                      </svg>
+                      <span>Default Mail App</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Email Sent Confirmation Status -->
+              <div *ngIf="msg.emailSent" class="direct-email-status-container mt-2">
+                <div class="direct-email-status sent">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                  </svg>
+                  <span>Query sent to <strong>{{ SUPPORT_EMAIL }}</strong> from <strong>{{ msg.fromEmail }}</strong></span>
+                </div>
+              </div>
+
+              <!-- Email Error Status -->
+              <div *ngIf="msg.emailStatus === 'error'" class="direct-email-status-container mt-2">
+                <div class="direct-email-status error">
+                  <span>Send failed. You can open your mail app directly:</span>
+                  <button type="button" class="status-action-pill" (click)="openGmailWeb(msg)">Open in Gmail</button>
+                  <button type="button" class="status-action-pill" (click)="openMailto(msg)">Mail App</button>
+                </div>
+              </div>
+
               <!-- Action Pills (if any) -->
               <div *ngIf="msg.actions && msg.actions.length > 0" class="message-actions mt-2">
                 <button 
